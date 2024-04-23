@@ -10,7 +10,7 @@ public class PA4 {
             "-cp", classPath, "-pp", // sets the class path for Soot
             // "-f", "J", // produce output in jimple format
             // "-keep-line-number", // preserves line numbers in input Java files  
-            "-main-class", "Test1o",	// specify the main class
+            "-main-class", "Test",	// specify the main class
             "-process-dir", dir,      // directory of classes to analyze
         };
 
