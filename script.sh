@@ -11,7 +11,7 @@ do
     javac -g Test.java
     cd ..
     echo "####################################################################### $file"
-    java -cp .:soot.jar PA4
+    java -cp .:soot.jar PA4 $file
     #  | grep -v "^Soot " >> ../output.txt
     rm -rf testcase
 done

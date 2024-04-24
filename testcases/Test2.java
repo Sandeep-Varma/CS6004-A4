@@ -8,11 +8,11 @@ class A {
 }
 
 class Test {
-    void func(){
+    void func1(){
         A a = new A();
         return;
     }
-    A func(A x, A y) {
+    A func2(A x, A y) {
         A z = new A();
         for (; y.n > 0; y.n--) {
             z.n = z.n + x.n;

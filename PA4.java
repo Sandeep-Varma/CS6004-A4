@@ -12,6 +12,7 @@ public class PA4 {
             // "-keep-line-number", // preserves line numbers in input Java files  
             "-main-class", "Test",	// specify the main class
             "-process-dir", dir,      // directory of classes to analyze
+            "-d", "./sootOutput/" + getDirName(args[0]), // output directory
         };
 
         // Create transformer for analysis
@@ -23,4 +24,9 @@ public class PA4 {
         // Call Soot's main method with arguments
         soot.Main.main(sootArgs);
     }
+
+    private static String getDirName(String testcase){
+        String[] parts = testcase.split("/");
+        return parts[parts.length - 1].split(".java")[0];
+    } 
 }

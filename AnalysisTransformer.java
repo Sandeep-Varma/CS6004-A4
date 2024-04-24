@@ -3,6 +3,8 @@ import soot.*;
 import soot.jimple.*;
 import soot.jimple.internal.*;
 import soot.toolkits.graph.*;
+
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -11,8 +13,11 @@ class AnalysisTransformer extends BodyTransformer {
     boolean FieldPrivatizationStart = false;
     Set<SootClass> FieldPrivatizedClasses = new HashSet<SootClass>();
     Set<SootClass> RemainingClasses = new HashSet<SootClass>();
+    private final Semaphore barrier = new Semaphore(0);
+    private int count = 0;
     @Override
     protected void internalTransform(Body body, String phaseName, Map<String, String> options) {
+        // PHASE 1 - Field Privatization
         lock.lock();
         if (!FieldPrivatizationStart) {
             for (SootClass c : Scene.v().getApplicationClasses()) {
@@ -29,10 +34,27 @@ class AnalysisTransformer extends BodyTransformer {
             RemainingClasses.remove(c);
         }
         lock.unlock();
+
         if (!done) PrivatizeFields(c);
+
+        // BARRIER
+        lock.lock();
+        if (!done) count++;
+        lock.unlock();
+        if (count == FieldPrivatizedClasses.size())
+            barrier.release();
+        try {
+            barrier.acquire();
+        } catch (InterruptedException e) {}
+        barrier.release();
+
+        // PHASE 2 - Replace all reads of fields with getter methods and all writes with setter methods
+
+        // PHASE 3 - Optimization - decreasing number of loads and stores by reducing unnecessary getter and setter calls
+        
     }
 
-    static private void PrivatizeFields(SootClass c) {
+    private void PrivatizeFields(SootClass c) {
         SootClass declaringClass = c;
         for (SootField field : declaringClass.getFields()) {
             if (!field.isStatic()) {
@@ -75,7 +97,7 @@ class AnalysisTransformer extends BodyTransformer {
         }
     }
 
-    static private String capitalizeFirstLetter(String s) {
+    private String capitalizeFirstLetter(String s) {
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 }
