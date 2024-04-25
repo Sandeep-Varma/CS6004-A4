@@ -49,9 +49,47 @@ class AnalysisTransformer extends BodyTransformer {
         barrier.release();
 
         // PHASE 2 - Replace all reads of fields with getter methods and all writes with setter methods
+        ReplaceFieldAccesses(body);
 
         // PHASE 3 - Optimization - decreasing number of loads and stores by reducing unnecessary getter and setter calls
         
+    }
+
+    private void ReplaceFieldAccesses(Body body) {
+        PatchingChain<Unit> units = body.getUnits();
+        Iterator<Unit> it = units.snapshotIterator();
+        while(it.hasNext()) {
+            Unit u = it.next();
+            if (u instanceof JAssignStmt) {
+                JAssignStmt stmt = (JAssignStmt) u;
+                Value leftOp = stmt.getLeftOp();
+                Value rightOp = stmt.getRightOp();
+                if (rightOp instanceof JInstanceFieldRef) {
+                    if (!FieldPrivatizedClasses.contains(((JInstanceFieldRef) rightOp).getField().getDeclaringClass())) continue;
+                    JInstanceFieldRef fieldRef = (JInstanceFieldRef) rightOp;
+                    Local referredObj = (Local) fieldRef.getBase();
+                    SootField field = fieldRef.getField();
+                    SootMethod getter = field.getDeclaringClass().getMethodByName("get" + capitalizeFirstLetter(field.getName()));
+                    if (getter != null) {
+                        Unit newUnit = Jimple.v().newAssignStmt(leftOp, Jimple.v().newVirtualInvokeExpr(referredObj, getter.makeRef()));
+                        units.insertBefore(newUnit, u);
+                        units.remove(u);
+                    }
+                }
+                if (leftOp instanceof JInstanceFieldRef) {
+                    if (!FieldPrivatizedClasses.contains(((JInstanceFieldRef) leftOp).getField().getDeclaringClass())) continue;
+                    JInstanceFieldRef fieldRef = (JInstanceFieldRef) leftOp;
+                    Local referredObj = (Local) fieldRef.getBase();
+                    SootField field = fieldRef.getField();
+                    SootMethod setter = field.getDeclaringClass().getMethodByName("set" + capitalizeFirstLetter(field.getName()));
+                    if (setter != null) {
+                        Unit newUnit = Jimple.v().newInvokeStmt(Jimple.v().newVirtualInvokeExpr(referredObj, setter.makeRef(), stmt.getRightOp()));
+                        units.insertBefore(newUnit, u);
+                        units.remove(u);
+                    }
+                }
+            }
+        }
     }
 
     private void PrivatizeFields(SootClass c) {
