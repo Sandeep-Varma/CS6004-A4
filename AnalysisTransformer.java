@@ -24,6 +24,7 @@ class AnalysisTransformer extends BodyTransformer {
         if (!FieldPrivatizationStart) {
             for (SootClass c : Scene.v().getApplicationClasses()) {
                 if (c.isPhantom() || c.isInterface() || c.isAbstract() || c.isStatic()) continue;
+                if (c.hasSuperclass() && Scene.v().getApplicationClasses().contains(c.getSuperclass())) continue;
                 FieldPrivatizedClasses.add(c);
             }
             RemainingClasses.addAll(FieldPrivatizedClasses);
@@ -289,7 +290,7 @@ class AnalysisTransformer extends BodyTransformer {
     private void PrivatizeFields(SootClass c) {
         SootClass declaringClass = c;
         for (SootField field : declaringClass.getFields()) {
-            if (!field.isStatic()) {
+            if (!field.isStatic() && !field.isPrivate()){
                 field.setModifiers(Modifier.PRIVATE);
                 // Add getter method
                 SootMethod getter = new SootMethod("get" + capitalizeFirstLetter(field.getName()),
