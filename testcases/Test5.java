@@ -1,5 +1,10 @@
+class X {
+    int z;
+}
+
 class A {
     int n;
+    X x;
 }
 
 class Test {

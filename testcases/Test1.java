@@ -3,16 +3,10 @@ class A {
 }
 
 class Test {
-    void func1(){
-        A a = new A();
-        return;
-    }
-    A func2(A x, A y) {
-        A z = new A();
-        for (; y.n > 0; y.n--) {
-            z.n = z.n + x.n;
-            x.n--;
+    A func(A x) {
+        for (int i=0; i < 10; i++) {
+            x.n++;
         }
-        return z;
+        return x;
     }
 }
