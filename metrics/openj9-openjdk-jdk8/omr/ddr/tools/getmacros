@@ -1,0 +1,308 @@
+#!/bin/bash
+
+###############################################################################
+# Copyright (c) 2016, 2019 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at http://eclipse.org/legal/epl-2.0
+# or the Apache License, Version 2.0 which accompanies this distribution
+# and is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following Secondary
+# Licenses when the conditions for such availability set forth in the
+# Eclipse Public License, v. 2.0 are satisfied: GNU General Public License,
+# version 2 with the GNU Classpath Exception [1] and GNU General Public
+# License, version 2 with the OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################
+
+debug=1
+
+# Regular expressions used to process the defines and namespace annotations.
+# These assume that all whitespace has been replaced by space characters.
+id='[A-Za-z_][A-Za-z0-9_]*' # matches an identifier
+default_regex="@ddr_namespace: *default"
+map_to_type_regex="@ddr_namespace: *map_to_type="
+flag_define_regex="^ *# *define +(${id}) *($|//|/\*)"
+flag_undef_regex="^ *# *undef +(${id}) *($|//|/\*)"
+flag_undef_regex_comment="^/\* #undef (${id}) \*/"
+value_define_regex="^ *# *define +(${id}) +[^ /].*($|//|/\*)"
+include_guard_regex=".*_[Hh]([Pp][Pp])?_? *($|//|/\*)"
+
+# Detect if we're running on z/OS, in which case we'll
+# need to use iconv to produce EBCDIC output.
+if [ "$(uname -s)" = "OS/390" ]; then
+	zos390=yes
+else
+	zos390=no
+fi
+
+##
+# Create a list of all c, h, cpp and hpp files that have simple (non function) macros within them.
+##
+get_all_annotated_files() {
+	local annotated_files=$(find ${scan_dir} -type f | grep -E -e '\.[ch](pp)?$' | sort | xargs -L1 grep -lE '@ddr_(namespace|options):')
+	echo "${annotated_files[@]}"
+}
+
+get_ddr_options() {
+	# Check the file for "@ddr_options" or use the default settings.
+	if grep -qE "@ddr_options: *valuesonly" ${f}; then
+		addValues=1
+		addFlags=0
+	elif grep -qE "@ddr_options: *buildflagsonly" ${f}; then
+		addValues=0
+		addFlags=1
+	elif grep -qE "@ddr_options: *valuesandbuildflags" ${f}; then
+		addValues=1
+		addFlags=1
+	elif grep -qE "@ddr_namespace: *(default|map_to_type=)" ${f}; then
+		addValues=1
+		addFlags=0
+	else
+		addValues=0
+		addFlags=0
+	fi
+}
+
+# invoked with the name of desired namespace
+begin_namespace() {
+	old_namespace=${namespace}
+	namespace="${1}"
+	if [ "${namespace}" != "${old_namespace}" ]; then
+		echo "TYPE_${namespace}"
+	fi
+}
+
+set_default_namespaces() {
+	# Remove directory and extension; make first letter uppercase; append 'Constants'.
+	basename=${f##*/}
+	basename=${basename%%.*}
+	basename=${basename^}
+	const_space="${basename}Constants"
+	flag_space="${basename}Flags"
+}
+
+set_map_to_type_namespaces() {
+	# Extract the type name.
+	typename=$(echo "${line}" | sed -e "s|^.*map_to_type=\(${id}\).*$|\1|")
+	const_space="${typename}"
+	flag_space=$(echo "${typename}" | sed -e 's|Constants$|Flags|')
+}
+
+# invoked with the name of the flag macro
+write_flag_macro() {
+	begin_namespace "${const_space}"
+
+	echo "#ifdef ${1}"
+	echo "MACRO_${1} 1"
+	echo "#else"
+	echo "MACRO_${1} 0"
+	echo "#endif"
+}
+
+# invoked with the name of the flag macro
+write_flag_defined() {
+	begin_namespace "${flag_space}"
+
+	echo "#ifdef ${1}"
+	echo "MACRO_${1}_DEFINED 1"
+	echo "#else"
+	echo "MACRO_${1}_DEFINED 0"
+	echo "#endif"
+}
+
+# macro name supplied as only argument
+define_flag_macro() {
+	name="$1"
+	# Filter include guards and print the macro as a constant.
+	if ! [[ ${line} =~ ${include_guard_regex} ]]; then
+		write_flag_macro "${name}"
+		write_flag_defined "${name}"
+	fi
+}
+
+# macro name supplied as only argument
+undef_flag_macro() {
+	name="$1"
+	write_flag_macro "${name}"
+	write_flag_defined "${name}"
+}
+
+# macro name supplied as only argument
+define_value_macro() {
+	name="$1"
+
+	if [ ${addValues} -ne 0 ]; then
+		# Print the macro in the constants space.
+		begin_namespace "${const_space}"
+
+		echo "#ifdef ${name}"
+		echo "MACRO_${name} ${name}"
+		echo "#endif"
+	fi
+
+	if [ ${addFlags} -ne 0 ]; then
+		write_flag_defined "${name}"
+	fi
+}
+
+process_one_policy_file() {
+	# Inject repeated include guard and file delimiter
+	echo ""
+	echo "#ifndef DDRGEN_F${filenum}_GUARD_H"
+	echo "#define DDRGEN_F${filenum}_GUARD_H"
+	echo "DDRFILE_BEGIN ${f}"
+
+	set_default_namespaces
+	namespace=''
+
+	# Gather qualifying macro definitions.
+	# We use sed to replace tabs with spaces and trim trailing spaces
+	# to simplify patterns for this script; it also filters out the
+	# bulk of irrelevant content.
+	sed -n \
+		-e 's|[[:space:]]| |g' \
+		-e 's| *$||' \
+		-e '/@ddr_namespace:/p' \
+		-e '/^ *# *define /p' \
+		-e '/^ *# *undef /p' \
+		-e '/^\/\* #undef /p' \
+	| while read -r line; do
+		if [[ ${line} =~ ${default_regex} ]]; then
+			set_default_namespaces
+		elif [[ ${line} =~ ${map_to_type_regex} ]]; then
+			set_map_to_type_namespaces
+		elif [[ ${addValues} -ne 0 && ${line} =~ ${value_define_regex} ]]; then
+			# Print a value define.
+			define_value_macro "${BASH_REMATCH[1]}"
+		elif [[ ${addFlags} -ne 0 && ${line} =~ ${flag_define_regex} ]]; then
+			# Print a define flag as a constant of 1.
+			define_flag_macro "${BASH_REMATCH[1]}"
+		elif [[ ${addFlags} -ne 0 && ${line} =~ ${flag_undef_regex} || ${line} =~ ${flag_undef_regex_comment} ]]; then
+			# Print an undef flag as a constant of 0.
+			undef_flag_macro "${BASH_REMATCH[1]}"
+		fi
+	done
+
+	# close repeated include guard and file delimiter
+	echo "DDRFILE_END ${f}"
+	echo "#endif"
+}
+
+##
+# For each file, create another file with all the macro names in it. This file
+# will include the source file, and be used to find macro values by running the
+# C preprocessor on it. The results are added to the macroList file containing
+# all macro info. The map to type policy associates all of the macros from a file
+# with the type specified in the top of the header.
+##
+parse_namespace_policy_files() {
+	# filenum is used to generate an enumerated include guard for each file.
+	# The generated include guard is used in case the file path or name contains
+	# characters that can't be part of a valid macro definition.
+	local filenum=0
+
+	for f in "${annotated_files[@]}"; do
+		# Find ddr_options or use the default.
+		get_ddr_options
+
+		if [ ${addFlags} -ne 0 -o ${addValues} -ne 0 ]; then
+			if [ $debug -ne 0 ]; then
+				echo "Processing constants in '${f}' ..."
+			fi
+
+			# backup the original file (preserving its timestamp)
+			mv ${f} ${f}.orig
+			cp ${f}.orig ${f}
+
+			# Increment the sequence number embedded in generated include guard names.
+			(( filenum++ ))
+
+			# read from the backup, rather than the file to which we're appending
+			if [ $zos390 = yes ] ; then
+				# On z/OS, all source files are in EBCDIC: we must retain that
+				# property as we append to header files.
+				process_one_policy_file < ${f}.orig | iconv -f ISO8859-1 -t IBM-1047 >> ${f}
+			else
+				process_one_policy_file < ${f}.orig >> ${f}
+			fi
+		fi
+	done
+}
+
+restore_annotated_files() {
+	date "+[%F %T] Restoring annotated files ..."
+	for f in "${annotated_files[@]}"; do
+		# restore the original file (retaining its timestamp)
+		if [[ -e ${f}.orig ]]; then
+			mv ${f} ${f}.annt
+			mv ${f}.orig ${f}
+		fi
+	done
+}
+
+# On Ctrl-C we want to restore any annotated files, and then exit
+trap_int() {
+	echo "Ctrl-C detected, exiting ..."
+	restore_annotated_files
+	exit
+}
+
+main() {
+	# trap Ctrl-C and call trap_int()
+	trap "trap_int" INT TERM
+
+	annotated_files=( $(get_all_annotated_files) )
+
+	# Overwrite the output file if it exists. This file will contain all of the final macro/type info.
+	echo "" > ${macroList_file}
+
+	date "+[%F %T] Annotating source files containing macros ..."
+	# Deal with specific policies.
+	parse_namespace_policy_files
+	date "+[%F %T] Annotating source files containing macros complete."
+
+	# preprocess annotated source code
+	if [[ $(command -v gmake) ]]; then
+		make=gmake
+	else
+		make=make
+	fi
+	${make} --ignore-errors --jobs=8 --keep-going -C ${scan_dir} ddrgen
+
+	# Build an awk filter that removes duplicate information.
+	declare -ar dedup_filter=(
+		'BEGIN { include = 0 }'
+		'/^@DDRFILE_BEGIN / { if (file[$2] != 1) { file[$2] = 1; include = 1 } }'
+		'{ if (include) { print } }'
+		'/^@DDRFILE_END / { include = 0 }'
+	)
+
+	date "+[%F %T] Scraping anotations from preprocessed code ..."
+	find ${scan_dir} -type f -name '*.i' \
+		| sort \
+		| xargs cat \
+		| grep -E -e '^@(DDRFILE|MACRO|TYPE)_' \
+		| awk "${dedup_filter[*]}" \
+		> ${macroList_file}
+
+	restore_annotated_files
+
+	date "+[%F %T] All done."
+}
+
+# Command line arg 1.
+scan_dir=${1%/}
+macroList_file="${scan_dir}/macroList"
+
+if [[ $(uname) == *"Win"* ]]; then
+	export PATH="/c/dev/products/jtc-toolchain/java7/windows/mingw-msys/msys/1.0/bin:$PATH"
+fi
+
+main

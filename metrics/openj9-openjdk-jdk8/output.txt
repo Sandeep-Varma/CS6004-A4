@@ -1,0 +1,5 @@
+run.sh: line 8: ../../openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image/bin/java: No such file or directory
+
+real	0m0.000s
+user	0m0.000s
+sys	0m0.000s

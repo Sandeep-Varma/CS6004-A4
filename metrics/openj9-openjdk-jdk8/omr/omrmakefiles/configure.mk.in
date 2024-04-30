@@ -1,0 +1,256 @@
+###############################################################################
+# Copyright (c) 2015, 2020 IBM Corp. and others
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which accompanies this
+# distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+# or the Apache License, Version 2.0 which accompanies this distribution and
+# is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# This Source Code may also be made available under the following
+# Secondary Licenses when the conditions for such availability set
+# forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+# General Public License, version 2 with the GNU Classpath
+# Exception [1] and GNU General Public License, version 2 with the
+# OpenJDK Assembly Exception [2].
+#
+# [1] https://www.gnu.org/software/classpath/license.html
+# [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+###############################################################################
+
+###
+### @configure_input@
+###
+
+###
+### Ensure the default target is "all"
+###
+
+all:
+.PHONY: all
+
+###
+### OMR Build Flags
+###
+
+OMR_ALLOW_NATIVE_ENCODING := @OMR_ALLOW_NATIVE_ENCODING@
+OMR_ARCH_AARCH64 := @OMR_ARCH_AARCH64@
+OMR_ARCH_ARM := @OMR_ARCH_ARM@
+OMR_ARCH_POWER := @OMR_ARCH_POWER@
+OMR_ARCH_S390 := @OMR_ARCH_S390@
+OMR_ARCH_X86 := @OMR_ARCH_X86@
+OMR_ARCH_RISCV := @OMR_ARCH_RISCV@
+OMR_ENV_DATA64 := @OMR_ENV_DATA64@
+OMR_ENV_LITTLE_ENDIAN := @OMR_ENV_LITTLE_ENDIAN@
+OMR_EXAMPLE := @OMR_EXAMPLE@
+OMR_RTTI := @OMR_RTTI@
+OMR_GC := @OMR_GC@
+OMR_GC_ALLOCATION_TAX := @OMR_GC_ALLOCATION_TAX@
+OMR_GC_BATCH_CLEAR_TLH := @OMR_GC_BATCH_CLEAR_TLH@
+OMR_GC_COMBINATION_SPEC := @OMR_GC_COMBINATION_SPEC@
+OMR_GC_COMPRESSED_POINTERS := @OMR_GC_COMPRESSED_POINTERS@
+OMR_GC_FULL_POINTERS := @OMR_GC_FULL_POINTERS@
+OMR_GC_CONCURRENT_SCAVENGER := @OMR_GC_CONCURRENT_SCAVENGER@
+OMR_GC_CONCURRENT_SWEEP := @OMR_GC_CONCURRENT_SWEEP@
+OMR_GC_DEBUG_ASSERTS := @OMR_GC_DEBUG_ASSERTS@
+OMR_GC_DYNAMIC_CLASS_UNLOADING := @OMR_GC_DYNAMIC_CLASS_UNLOADING@
+OMR_GC_IDLE_HEAP_MANAGER := @OMR_GC_IDLE_HEAP_MANAGER@
+OMR_GC_LARGE_OBJECT_AREA := @OMR_GC_LARGE_OBJECT_AREA@
+OMR_GC_LEAF_BITS := @OMR_GC_LEAF_BITS@
+OMR_GC_MINIMUM_OBJECT_SIZE := @OMR_GC_MINIMUM_OBJECT_SIZE@
+OMR_GC_MODRON_COMPACTION := @OMR_GC_MODRON_COMPACTION@
+OMR_GC_MODRON_CONCURRENT_MARK := @OMR_GC_MODRON_CONCURRENT_MARK@
+OMR_GC_MODRON_SCAVENGER := @OMR_GC_MODRON_SCAVENGER@
+OMR_GC_MODRON_STANDARD := @OMR_GC_MODRON_STANDARD@
+OMR_GC_NON_ZERO_TLH := @OMR_GC_NON_ZERO_TLH@
+OMR_GC_OBJECT_ALLOCATION_NOTIFY := @OMR_GC_OBJECT_ALLOCATION_NOTIFY@
+OMR_GC_OBJECT_MAP := @OMR_GC_OBJECT_MAP@
+OMR_GC_REALTIME := @OMR_GC_REALTIME@
+OMR_GC_SEGREGATED_HEAP := @OMR_GC_SEGREGATED_HEAP@
+OMR_GC_THREAD_LOCAL_HEAP := @OMR_GC_THREAD_LOCAL_HEAP@
+OMR_GC_TLH_PREFETCH_FTA := @OMR_GC_TLH_PREFETCH_FTA@
+OMR_GC_VLHGC := @OMR_GC_VLHGC@
+OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD := @OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD@
+OMR_INTERP_HAS_SEMAPHORES := @OMR_INTERP_HAS_SEMAPHORES@
+OMR_COMPILER := @OMR_COMPILER@
+OMR_JITBUILDER := @OMR_JITBUILDER@
+OMR_NOTIFY_POLICY_CONTROL := @OMR_NOTIFY_POLICY_CONTROL@
+OMR_OMRSIG := @OMR_OMRSIG@
+OMR_OPT_CUDA := @OMR_OPT_CUDA@
+OMR_PORT := @OMR_PORT@
+OMR_PORT_ALLOCATE_TOP_DOWN := @OMR_PORT_ALLOCATE_TOP_DOWN@
+OMR_PORT_ASYNC_HANDLER := @OMR_PORT_ASYNC_HANDLER@
+OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS := @OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS@
+OMR_PORT_NUMA_SUPPORT := @OMR_PORT_NUMA_SUPPORT@
+OMR_PORT_ZOS_CEEHDLRSUPPORT := @OMR_PORT_ZOS_CEEHDLRSUPPORT@
+OMRPORT_OMRSIG_SUPPORT := @OMRPORT_OMRSIG_SUPPORT@
+OMR_RAS_TDF_TRACE := @OMR_RAS_TDF_TRACE@
+OMR_SHARED_CACHE := @OMR_SHARED_CACHE@
+OMR_TEST_COMPILER := @OMR_TEST_COMPILER@
+OMR_THR_ADAPTIVE_SPIN := @OMR_THR_ADAPTIVE_SPIN@
+OMR_THR_CUSTOM_SPIN_OPTIONS := @OMR_THR_CUSTOM_SPIN_OPTIONS@
+OMR_THR_FORK_SUPPORT := @OMR_THR_FORK_SUPPORT@
+OMR_THR_JLM := @OMR_THR_JLM@
+OMR_THR_JLM_HOLD_TIMES := @OMR_THR_JLM_HOLD_TIMES@
+OMR_THR_LOCK_NURSERY := @OMR_THR_LOCK_NURSERY@
+OMR_THR_THREE_TIER_LOCKING := @OMR_THR_THREE_TIER_LOCKING@
+OMR_THR_TRACING := @OMR_THR_TRACING@
+OMR_THR_YIELD_ALG := @OMR_THR_YIELD_ALG@
+OMR_THR_SPIN_WAKE_CONTROL := @OMR_THR_SPIN_WAKE_CONTROL@
+OMR_THR_MCS_LOCKS := @OMR_THR_MCS_LOCKS@
+OMR_THREAD := @OMR_THREAD@
+OMR_ZOS_COMPILE_ARCHITECTURE := @OMR_ZOS_COMPILE_ARCHITECTURE@
+OMR_ZOS_COMPILE_TARGET := @OMR_ZOS_COMPILE_TARGET@
+OMR_ZOS_COMPILE_TUNE := @OMR_ZOS_COMPILE_TUNE@
+OMR_ZOS_LINK_COMPAT := @OMR_ZOS_LINK_COMPAT@
+OMRTHREAD_LIB_AIX := @OMRTHREAD_LIB_AIX@
+OMRTHREAD_LIB_UNIX := @OMRTHREAD_LIB_UNIX@
+OMRTHREAD_LIB_WIN32 := @OMRTHREAD_LIB_WIN32@
+OMRTHREAD_LIB_ZOS := @OMRTHREAD_LIB_ZOS@
+
+###
+### Version information used to generate .rc file on Windows
+###
+
+OMR_COMPANY_NAME := @OMR_COMPANY_NAME@
+OMR_COMPANY_COPYRIGHT := @OMR_COMPANY_COPYRIGHT@
+OMR_PRODUCT_DESCRIPTION := @OMR_PRODUCT_DESCRIPTION@
+OMR_PRODUCT_NAME := @OMR_PRODUCT_NAME@
+OMR_PRODUCT_VERSION := @OMR_PRODUCT_VERSION@
+
+###
+### Global Autoconfigure Flags
+###
+
+# If OMRGLUE contains relative paths, assume they are relative to the
+# top of the build tree.
+# We can't convert OMRGLUE to absolute paths because, for z/OS, Windows, and AIX,
+# the J9 build runs configure and compiles in different directory structures.
+OMRGLUE ?= $(filter /%,@OMRGLUE@)$(addprefix $(top_srcdir)/,$(filter-out /%,@OMRGLUE@))
+
+OMR_CROSS_COMPILE := @OMR_CROSS_COMPILE@
+
+OMR_HOST_OS := @OMR_HOST_OS@
+OMR_HOST_ARCH := @OMR_HOST_ARCH@
+OMR_TARGET_DATASIZE := @OMR_TARGET_DATASIZE@
+OMR_TOOLCHAIN := @OMR_TOOLCHAIN@
+
+lib_output_dir := @lib_output_dir@
+exe_output_dir := @exe_output_dir@
+
+CPPFLAGS := @CPPFLAGS@
+CFLAGS := @CFLAGS@
+CXXFLAGS := @CXXFLAGS@
+LDFLAGS := @LDFLAGS@
+
+OMRGLUE_CPPFLAGS := @OMRGLUE_CPPFLAGS@
+OMRGLUE_CFLAGS := @OMRGLUE_CFLAGS@
+OMRGLUE_CXXFLAGS := @OMRGLUE_CXXFLAGS@
+OMRGLUE_INCLUDES := $(OMRGLUE) $(filter /%,@OMRGLUE_INCLUDES@) $(addprefix $(top_srcdir)/,$(filter-out /%,@OMRGLUE_INCLUDES@))
+
+# GNU make provides a default value for ARFLAGS. We want to override it with our own value.
+ARFLAGS = @ARFLAGS@
+
+CC := @CC@
+CXX := @CXX@
+CCLINK := @CCLINK@
+CCLINKSHARED := @CCLINKSHARED@
+CCLINKEXE := @CCLINKEXE@
+CXXLINK := @CXXLINK@
+CXXLINKSHARED := @CXXLINKSHARED@
+CXXLINKEXE := @CXXLINKEXE@
+
+AS := @AS@
+AR := @AR@
+OBJCOPY := @OBJCOPY@
+
+LIBPREFIX := @libprefix@
+EXEEXT := @exeext@
+SOLIBEXT := @solibext@
+ARLIBEXT := @arlibext@
+OBJEXT := @objext@
+
+###
+### Platform Flags
+###
+
+# Need to allow deferred expansion of automatic variables like $*
+GLOBAL_CPPFLAGS = @GLOBAL_CPPFLAGS@
+GLOBAL_CFLAGS = @GLOBAL_CFLAGS@
+GLOBAL_CXXFLAGS = @GLOBAL_CXXFLAGS@
+GLOBAL_INCLUDES = @GLOBAL_INCLUDES@
+GLOBAL_LDFLAGS = @GLOBAL_LDFLAGS@
+GLOBAL_STATIC_LIBS = @GLOBAL_STATIC_LIBS@
+GLOBAL_SHARED_LIBS = @GLOBAL_SHARED_LIBS@
+GLOBAL_LIBPATH = @GLOBAL_LIBPATH@
+GLOBAL_ARFLAGS = @GLOBAL_ARFLAGS@
+
+OMR_OPTIMIZE := @OMR_OPTIMIZE@
+OMR_WARNINGS_AS_ERRORS := @OMR_WARNINGS_AS_ERRORS@
+OMR_ENHANCED_WARNINGS := @OMR_ENHANCED_WARNINGS@
+OMR_DEBUG := @OMR_DEBUG@
+OMR_VALGRIND_MEMCHECK:= @OMR_VALGRIND_MEMCHECK@
+
+ENABLE_FVTEST := @enable_fvtest@
+ENABLE_FVTEST_AGENT := @enable_fvtest_agent@
+ENABLE_TRACEGEN := @enable_tracegen@
+
+ENABLE_DDR := @enable_DDR@
+DIASDK_HOME := @DIASDK_HOME@
+
+###
+### Global Options
+###
+
+## Add Global Flags
+# Header files in the current directory should have first precedence.
+MODULE_INCLUDES += .
+GLOBAL_INCLUDES += $(top_srcdir)/include_core $(top_srcdir)/nls
+
+# By default, shared libs are built into exe_output_dir, and
+# static libs are built into lib_output_dir.
+GLOBAL_LIBPATH += . $(exe_output_dir) $(lib_output_dir)
+
+## Special settings for fvtests
+# Location of fvtest framework
+OMR_GTEST_DIR := $(top_srcdir)/third_party/gtest-1.8.0
+OMR_GTEST_INCLUDES := $(OMR_GTEST_DIR) $(OMR_GTEST_DIR)/include $(top_srcdir)/fvtest/omrGtestGlue
+OMR_PUGIXML_DIR := $(top_srcdir)/third_party/pugixml-1.5
+
+# googletest code requires exception handling
+ifeq (linux,$(OMR_HOST_OS))
+  ifeq (xlc,$(OMR_TOOLCHAIN))
+    OMR_GTEST_CXXFLAGS += -qeh
+  else
+    OMR_GTEST_CXXFLAGS += -fexceptions
+  endif
+endif
+ifeq (msvc,$(OMR_TOOLCHAIN))
+  OMR_GTEST_CXXFLAGS += /EHsc
+endif
+
+# Public Core OMR header files
+OMR_IPATH = \
+  $(top_srcdir)/include_core \
+  $(top_srcdir)/omr/startup \
+  $(top_srcdir)/gc/include \
+  $(top_srcdir)/gc/startup \
+
+# Internal OMR header files needed by OMR glue code
+OMRGC_IPATH = \
+  $(top_srcdir)/gc/base \
+  $(top_srcdir)/gc/base/standard \
+  $(top_srcdir)/gc/verbose \
+  $(top_srcdir)/gc/verbose/handler_standard \
+  $(top_srcdir)/gc/stats \
+  $(top_srcdir)/gc/structs
+
+ifeq (1,$(OMR_GC_SEGREGATED_HEAP))
+OMRGC_IPATH += $(top_srcdir)/gc/base/segregated
+endif
+
+ifeq (1,$(OMR_GC_VLHGC))
+OMRGC_IPATH += $(top_srcdir)/gc/base/vlhgc
+endif

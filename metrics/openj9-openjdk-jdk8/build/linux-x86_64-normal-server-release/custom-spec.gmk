@@ -1,0 +1,135 @@
+# ===========================================================================
+# (c) Copyright IBM Corp. 2017, 2021 All Rights Reserved
+# ===========================================================================
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.
+#
+# IBM designates this particular file as subject to the "Classpath" exception
+# as provided by IBM in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, see <http://www.gnu.org/licenses/>.
+# ===========================================================================
+
+# Remove -R from MAKE settings as some built-in rules are needed for OMR.
+MAKE := $(filter-out -R,$(MAKE))
+
+OPENJ9_TOPDIR           := /src/openj9-openjdk-jdk8/openj9
+OPENJ9OMR_TOPDIR        := /src/openj9-openjdk-jdk8/omr
+
+# compiler overrides
+OPENJ9_CC               := 
+OPENJ9_CXX              := 
+OPENJ9_DEVELOPER_DIR    := 
+NASM                    := /usr/bin/nasm
+
+# CUDA
+OPENJ9_ENABLE_CUDA      := false
+ifneq (,)
+export CUDA_HOME        := 
+endif
+ifneq (,)
+export GDK_HOME         := 
+endif
+
+# Archive from which to import Health Center content.
+HEALTHCENTER_JAR := 
+
+# OpenSSL
+OPENSSL_DIR             := 
+BUILD_OPENSSL           := 
+OPENSSL_CFLAGS          := 
+OPENSSL_BUNDLE_LIB_PATH := 
+WITH_OPENSSL            := no
+
+## DDR
+OPENJ9_ENABLE_DDR       := true
+
+# JITSERVER
+OPENJ9_ENABLE_JITSERVER := false
+
+# OpenJDK MethodHandles
+OPENJ9_ENABLE_OPENJDK_METHODHANDLES := false
+
+# for constructing version output
+COMPILER_VERSION_STRING := g++ (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0
+USERNAME                := 
+
+include $(SRC_ROOT)/closed/openjdk-tag.gmk
+
+JDK_MOD_VERSION         := 292
+JDK_FIX_VERSION         := 0
+J9JDK_EXT_VERSION       := $(JDK_MINOR_VERSION).$(JDK_MICRO_VERSION).$(JDK_MOD_VERSION).$(JDK_FIX_VERSION)
+#J9JDK_EXT_VERSION       := HEAD
+J9JDK_EXT_NAME          := Extensions for OpenJDK for Eclipse OpenJ9
+
+# required by CMake
+CMAKE                   := /usr/bin/cmake
+OPENJ9_ENABLE_CMAKE     := true
+
+# required by UMA
+FREEMARKER_JAR          := 
+OPENJ9_BUILDSPEC        := linux_x86-64_mxdptrs
+
+# required by JPP
+OPENJ9_PLATFORM_CODE    := xa64
+
+OPENJ9_LIBS_SUBDIR      := default
+
+# Mixed References Mode
+OMR_MIXED_REFERENCES_MODE := static
+
+# Export autoconf cache variables for CC/CXX.
+# This is for the case where ccache is enabled.
+# It ensures that OMR autoconf uses the compiler, not ccache.
+export ac_cv_prog_CC    := /usr/bin/gcc
+export ac_cv_prog_CXX   := /usr/bin/g++
+
+COPY_JVM_CFG_FILE       := true
+
+ifeq ($(OPENJDK_TARGET_OS), macosx)
+  # MACOSX_DEPLOYMENT_TARGET acts similar to -mmacosx-version-min=version
+  # compiler option. If both the compiler option is specified and the
+  # environment variable is set, then the compiler option will take
+  # precedence. Here, MACOSX_DEPLOYMENT_TARGET environment variable and
+  # the compiler option will point to the same version. The environment
+  # variable is defined to support dependencies where the compiler option
+  # is not applied.
+  export MACOSX_DEPLOYMENT_TARGET := 
+
+  # Set page zero size to 4KB for mapping memory below 4GB.
+  LDFLAGS_JDKEXE += -pagezero_size 0x1000
+endif
+
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  # Create 32-bit Windows builds which can handle addresses bigger than 2GB.
+  # This is already the default for 64-bit builds.
+  LDFLAGS_JDKEXE += /LARGEADDRESSAWARE
+endif
+
+# Usage: $(call CodesignFile, file)
+ifeq (,$(CODESIGN))
+  CodesignFile =
+else
+  CodesignFile = $(CODESIGN) --sign "$(MACOSX_CODESIGN_IDENTITY)" \
+	--entitlements $(firstword $(wildcard $(patsubst %,$(TOPDIR)/jdk/make/data/macosxsigning/%.plist,$(notdir $1) default))) \
+	--options runtime \
+	--timestamp \
+	"$1"
+endif
+
+# Use '=' instead of ':=' because bootcycle-spec.gmk overrides OUTPUT_ROOT.
+ifeq (true,$(OPENJ9_ENABLE_CMAKE))
+  OPENJ9_VM_BUILD_DIR = $(OUTPUT_ROOT)/vm/runtime
+else
+  OPENJ9_VM_BUILD_DIR = $(OUTPUT_ROOT)/vm
+endif
+
+J9JCL_SOURCES_DIR := $(JDK_OUTPUTDIR)/j9jcl

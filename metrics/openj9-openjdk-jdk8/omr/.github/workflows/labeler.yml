@@ -1,0 +1,13 @@
+name: "Pull Request Labeler"
+on:
+  schedule:
+  - cron: "*/5 * * * *"
+
+jobs:
+  triage:
+    if: github.repository == 'eclipse/omr'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: fjeremic/cron-labeler@0.3.0
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}

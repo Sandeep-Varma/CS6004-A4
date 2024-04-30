@@ -2,4 +2,3 @@ sootOutput
 javaOutput
 *.class
 */*.class
-metrics/*

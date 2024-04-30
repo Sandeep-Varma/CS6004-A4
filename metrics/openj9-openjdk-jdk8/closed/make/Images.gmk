@@ -1,0 +1,72 @@
+# ===========================================================================
+# (c) Copyright IBM Corp. 2018, 2021 All Rights Reserved
+# ===========================================================================
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.
+#
+# IBM designates this particular file as subject to the "Classpath" exception
+# as provided by IBM in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, see <http://www.gnu.org/licenses/>.
+# ===========================================================================
+
+# only include jextract, jpackcore in jre/bin
+NOT_JDK_BIN_FILES  := jextract$(EXE_SUFFIX) jpackcore$(EXE_SUFFIX)
+JDK_BIN_STRIP_LIST := $(filter-out $(addprefix %, $(addsuffix .stripped, $(NOT_JDK_BIN_FILES))), $(JDK_BIN_STRIP_LIST))
+JDK_BIN_TARGETS    := $(filter-out $(addprefix %, $(NOT_JDK_BIN_FILES)), $(JDK_BIN_TARGETS))
+
+ifeq (true,$(OPENJ9_ENABLE_DDR))
+
+.PHONY : openj9.ddr-gen openj9.ddr-jar
+
+openj9.ddr-gen :
+	+$(MAKE) -f $(SRC_ROOT)/closed/make/DDR.gmk SPEC=$(SPEC) generate
+
+openj9.ddr-jar : openj9.ddr-gen
+	+$(MAKE) -f $(SRC_ROOT)/closed/make/DDR.gmk SPEC=$(SPEC) build_jar
+
+jdk-image : openj9.ddr-jar
+
+endif # OPENJ9_ENABLE_DDR
+
+# include legal content
+
+$(addsuffix /LICENSE, $(JDK_IMAGE_DIR) $(JDK_IMAGE_DIR)/jre $(JRE_IMAGE_DIR)) : $(SRC_ROOT)/LICENSE
+	$(process-doc-file)
+
+$(addsuffix /openj9-notices, $(JDK_IMAGE_DIR) $(JRE_IMAGE_DIR)) : $(OPENJ9_TOPDIR)/LICENSE
+	$(call install-file)
+
+$(addsuffix /epl-2.0.html, $(JDK_IMAGE_DIR) $(JRE_IMAGE_DIR)) : $(OPENJ9_TOPDIR)/epl-2.0.html
+	$(call install-file)
+
+$(addsuffix /openj9-openjdk-notices, $(JDK_IMAGE_DIR) $(JRE_IMAGE_DIR)) : $(SRC_ROOT)/openj9-openjdk-notices
+	$(call install-file)
+
+JDK_DOC_TARGETS += $(addprefix $(JDK_IMAGE_DIR)/, openj9-notices epl-2.0.html openj9-openjdk-notices)
+JRE_DOC_TARGETS += $(addprefix $(JRE_IMAGE_DIR)/, openj9-notices epl-2.0.html openj9-openjdk-notices)
+
+# Omit man pages for launchers not provided by OpenJ9 or that describe
+# behavior that differs from the OpenJ9 implementation.
+OPENJ9_UNWANTED_MAN_PAGES := \
+	jcmd \
+	jhat \
+	jinfo \
+	jps \
+	jstack \
+	jstat \
+	jstatd \
+	#
+
+OPENJ9_MAN_PAGE_FILTER := $(foreach page,$(OPENJ9_UNWANTED_MAN_PAGES),%/$(page).1)
+
+$(foreach var, JDK_MAN_PAGE_LIST JRE_MAN_PAGE_LIST, \
+	$(eval $(var) := $$(filter-out $(OPENJ9_MAN_PAGE_FILTER), $($(var)))))
