@@ -10,6 +10,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 class AnalysisTransformer extends BodyTransformer {
+    public boolean optimize = true;
     private Lock lock = new ReentrantLock();
     boolean FieldPrivatizationStart = false;
     Set<SootClass> FieldPrivatizedClasses = new HashSet<SootClass>();
@@ -53,8 +54,10 @@ class AnalysisTransformer extends BodyTransformer {
         ReplaceFieldAccesses(body);
 
         // PHASE 3 - Optimization - decreasing number of loads and stores by reducing unnecessary getter and setter calls
-        for (Loop loop : new LoopNestTree(body)) {
-            MinimizeGetterSetterCalls(body, loop);
+        if (this.optimize) {
+            for (Loop loop : new LoopNestTree(body)) {
+                MinimizeGetterSetterCalls(body, loop);
+            }
         }
     }
 

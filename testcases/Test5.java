@@ -1,23 +1,38 @@
-class X {
-    int z;
-}
-
 class A {
     int n;
-    X x;
+}
+
+class B {
+    long m;
 }
 
 class Test {
-    void func1(){
-        A a = new A();
-        return;
-    }
-    A func2(A x, A y) {
-        A z = new A();
-        for (; y.n > 0; y.n--) {
-            z.n = z.n + x.n;
-            x.n--;
+    void func1(A a){
+        B b = new B();
+        b.m = a.n;
+        while (b.m > 0) {
+            b.m--;
+            if (b.m == 5) {
+                b = new B();
+                b.m = 4;
+            }
+            a.n++;
         }
-        return z;
+    }
+    void func2(A a){
+        B b = new B();
+        b.m = a.n;
+        while (b.m > 0) {
+            b.m--;
+            a.n++;
+        }
+    }
+    public static void main(String[] args) {
+        A a = new A();
+        a.n = 30;
+        Test t = new Test();
+        t.func1(a);
+        a.n = 20;
+        t.func2(a);
     }
 }

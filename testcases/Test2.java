@@ -15,4 +15,15 @@ class Test {
         }
         return z;
     }
+    public static void main(String[] args) {
+        A a = new A();
+        a.n = 0;
+        Test t = new Test();
+        t.func1();
+        A b = new A();
+        b.n = 17;
+        A c = new A();
+        c.n = 10;
+        A ans = t.func2(a, a);
+    }
 }

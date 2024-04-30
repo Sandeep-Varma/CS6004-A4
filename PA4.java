@@ -12,11 +12,14 @@ public class PA4 {
             // "-keep-line-number", // preserves line numbers in input Java files  
             "-main-class", "Test",	// specify the main class
             "-process-dir", dir,      // directory of classes to analyze
-            "-d", "./sootOutput/" + getDirName(args[0]), // output directory
+            "-d", "./sootOutput/" + getDirName(args[0],args[1]), // output directory
         };
 
         // Create transformer for analysis
         AnalysisTransformer analysisTransformer = new AnalysisTransformer();
+
+        if (args[1] == "no_op")
+            analysisTransformer.optimize = false;
 
         // Add transformer to appropriate pack in PackManager; PackManager will run all packs when soot.Main.main is called
         PackManager.v().getPack("jtp").add(new Transform("jtp.MyOptimization", analysisTransformer));
@@ -25,8 +28,8 @@ public class PA4 {
         soot.Main.main(sootArgs);
     }
 
-    private static String getDirName(String testcase){
+    private static String getDirName(String testcase, String opt){
         String[] parts = testcase.split("/");
-        return parts[parts.length - 1].split(".java")[0];
-    } 
+        return parts[parts.length - 1].split(".java")[0] + "_" + opt;
+    }
 }

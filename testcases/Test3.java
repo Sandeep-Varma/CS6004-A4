@@ -8,4 +8,10 @@ class Test {
         a.n--;
         func(a);
     }
+    public static void main(String[] args) {
+        A a = new A();
+        a.n = 20;
+        Test t = new Test();
+        t.func(a);
+    }
 }

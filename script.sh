@@ -1,9 +1,7 @@
 rm -f output.txt
-rm -rf *.class */*.class testcase sootOutput javaOutput
+rm -rf *.class */*.class testcase sootOutput
 
 javac -cp .:soot.jar PA4.java
-
-mkdir javaOutput
 
 for file in testcases/*.java
 do
@@ -13,12 +11,13 @@ do
     cd testcase/
     javac -g Test.java
     cd ..
-    mkdir javaOutput/${testcase%.*}
-    cp testcase/*.class javaOutput/${testcase%.*}/
     echo "####################################################################### $testcase"
-    java -cp .:soot.jar PA4 $file
+    java -cp .:soot.jar PA4 $file no_op
+    java -cp .:soot.jar PA4 $file op
     #  | grep -v "^Soot " >> ../output.txt
     rm -rf testcase
 done
 
 rm -rf *.class testcases/*.class
+rm -rf metrics/sootOutput
+cp -r sootOutput metrics/
