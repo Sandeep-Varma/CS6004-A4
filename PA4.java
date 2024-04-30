@@ -18,8 +18,18 @@ public class PA4 {
         // Create transformer for analysis
         AnalysisTransformer analysisTransformer = new AnalysisTransformer();
 
-        if (args[1] == "no_op")
+        if (args[1].equals("no_op")){
+            System.out.println("No optimization");
             analysisTransformer.optimize = false;
+        }
+        else if (args[1].equals("op")){
+            System.out.println("Optimization");
+            analysisTransformer.optimize = true;
+        }
+        else{
+            System.out.println("Invalid optimization argument");
+            return;
+        }
 
         // Add transformer to appropriate pack in PackManager; PackManager will run all packs when soot.Main.main is called
         PackManager.v().getPack("jtp").add(new Transform("jtp.MyOptimization", analysisTransformer));

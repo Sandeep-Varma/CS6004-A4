@@ -10,7 +10,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 class AnalysisTransformer extends BodyTransformer {
-    public boolean optimize = true;
+    public boolean optimize;
     private Lock lock = new ReentrantLock();
     boolean FieldPrivatizationStart = false;
     Set<SootClass> FieldPrivatizedClasses = new HashSet<SootClass>();
